@@ -6,14 +6,14 @@ tries=0
 
 echo -e "\n${B}🌌 Meher-Ips™ Live Ping Hunter <110ms${N}\n"
 
-# 🚀 اول: بپرس تعداد رو!
-read -p "${G}چندتا IP سریع می‌خوای پیدا کنم؟ (پیش‌فرض: 3) ${N}" num
+# 🚀 First: Ask for number!
+read -p "${G}How many fast IPs do you want to find? (default: 3) ${N}" num
 if [[ -z "$num" ]]; then
   num=3
 fi
 
-# 🌿 بپرس فرمت خروجی!
-read -p "${G}فرمت لیست خام: v (عمودی) یا h (افقی با کاما)؟ (پیش‌فرض: v) ${N}" format
+# 🌿 Ask for output format!
+read -p "${G}Raw list format: v (vertical) or h (horizontal with comma)? (default: v) ${N}" format
 if [[ -z "$format" ]]; then
   format="v"
 fi
@@ -23,7 +23,7 @@ else
   format="v"
 fi
 
-echo -e "${P}🚀 آماده کاوش ${num} ستاره‌ای؟ 🌌 شروع...${N}\n"
+echo -e "${P}🚀 Ready to explore ${num} stars? 🌌 Starting...${N}\n"
 
 while (( ${#found[@]} < num )); do
   ((tries++))
@@ -42,38 +42,38 @@ while (( ${#found[@]} < num )); do
   [[ -z "$ms" ]] && echo "no reply" && continue
 
   if (( $(echo "$ms < 105" | bc -l) )); then
-    echo -e "${G}✅ ${ms}ms${N} ${P}🚀 کشف فضایی! 🌌${N}"
+    echo -e "${G}✅ ${ms}ms${N} ${P}🚀 Space discovery! 🌌${N}"
     found+=("$ip → ${ms}ms")
   else
-    echo "too high (${ms}ms) – به کاوش ادامه بده!"
+    echo "too high (${ms}ms) – keep exploring!"
   fi
 done
 
-# 🔵 خروجی اصلی - هیجانی و ترتیبی! (با فلش و ms)
+# 🔵 Main output - Exciting and ordered! (with arrow and ms)
 echo -e "\n${B}✦─────────────────────────────────────────────────────✦${N}"
-echo -e "${P}🌌🚀  کشف‌های کهکشانی: ${#found[@]} ستاره سریع زیر ۱۰۵ms! 🌌🚀${N}"
+echo -e "${P}🌌🚀  Galactic discoveries: ${#found[@]} fast stars under 105ms! 🌌🚀${N}"
 echo -e "${B}─────────────────────────────────────────────────────✦${N}"
 
 for i in {0..$((num-1))}; do
-  echo -e "${G}$((i+1)). ${found[i]}${N}  ${P}✨ آماده پرواز! ✨${N}"
+  echo -e "${G}$((i+1)). ${found[i]}${N}  ${P}✨ Ready to fly! ✨${N}"
 done
 
 echo -e "${B}✦─────────────────────────────────────────────────────✦${N}"
-echo -e "${G}📦 تأییدشده توسط MehrabanScan™ – کاوش بعدی؟ 🌿 (تعداد کل تلاش: $tries)${N}"
+echo -e "${G}📦 Verified by MehrabanScan™ – Next exploration? 🌿 (Total tries: $tries)${N}"
 echo -e "${B}✦─────────────────────────────────────────────────────✦${N}\n"
 
-# 📋 بخش کپی آسان - فقط IPهای خالص!
-echo -e "\n${P}🌌 IPهای خالص آماده – مستقیم به پنل! 🚀${N}"
-echo -e "${B}📋 IPهای خالص برای پنل (کپی سرجمعی - ${format}):${N}"
+# 📋 Easy copy section - Pure IPs only!
+echo -e "\n${P}🌌 Pure IPs ready – Direct to panel! 🚀${N}"
+echo -e "${B}📋 Pure IPs for panel (bulk copy - ${format}):${N}"
 echo -e "${B}───────────────────────────────────────────────${N}"
 
 if [[ "$format" == "v" ]]; then
   for item in "${found[@]}"; do
-    clean_ip=$(echo "$item" | cut -d' ' -f1)  # فقط IP (قبل از →)
+    clean_ip=$(echo "$item" | cut -d' ' -f1)  # Just IP (before →)
     echo -e "${G}${clean_ip}${N}"
   done
 else
-  # افقی: IPهای خالص در یه خط با کاما
+  # Horizontal: Pure IPs in one line with comma
   ips_clean=()
   for item in "${found[@]}"; do
     ips_clean+=($(echo "$item" | cut -d' ' -f1))
