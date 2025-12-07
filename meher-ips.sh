@@ -1,115 +1,111 @@
-#!/bin/bash
+#!/data/data/com.termux/files/usr/bin/bash
 
-# تمیز کردن ANSI با tput (بهتر از raw escape)
+# رنگ‌ها با tput (حرفه‌ای‌تر)
 bold=$(tput bold)
 green=$(tput setaf 2)
 blue=$(tput setaf 4)
 purple=$(tput setaf 5)
+cyan=$(tput setaf 6)
+yellow=$(tput setaf 3)
 reset=$(tput sgr0)
+
+clear
+echo -e "${blue}
+      ✦══════════════════════════════════════════════════✦
+      \( {purple}        🌌 Meher-Ips™ Galactic Ping Hunter 2025 \){reset}
+      \( {blue}                Ultra Cosmic Edition v9.0 \){reset}
+      \( {blue}      ✦══════════════════════════════════════════════════✦ \){reset}
+"
+
+# ────────────── تنظیمات کاربر ──────────────
+echo -n "\( {cyan}➤ حداکثر پینگ قابل قبول (ms) [پیش‌فرض: 140]: \){reset}"
+read -r MAX_PING
+[[ -z "$MAX_PING" ]] && MAX_PING=140
+
+echo -n "\( {cyan}➤ چند تا آی‌پی سریع می‌خوای؟ [پیش‌فرض: 5]: \){reset}"
+read -r NEED
+[[ -z "$NEED" ]] && NEED=5
+
+echo -n "\( {cyan}➤ فرمت خروجی خام؟ (v=عمودی | h=افقی با کاما) [پیش‌فرض: v]: \){reset}"
+read -r format
+[[ -z "$format" ]] && format="v"
+[[ "$format" == "h"* || "$format" == "H"* ]] && format="h" || format="v"
+
+echo -e "\( {purple}🚀 آماده کاوش در کهکشان با پینگ ≤ \){yellow}\( {MAX_PING}ms \){purple} و \( {yellow} \){NEED}\( {purple} ستاره طلایی... \){reset}\n"
+
+# رنج‌های به‌روز و تمیز ایران – دی ۱۴۰۴ (تست شده)
+ranges=(
+    172.64. 172.65. 172.66. 172.67.
+    104.16. 104.17. 104.18. 104.19. 104.20.
+    104.21. 104.22. 104.23. 104.24. 104.25.
+    104.26. 104.27. 104.28. 104.29. 104.30.
+    141.101. 173.245. 190.93.
+)
 
 found=()
 tries=0
-max_tries=100  # حد تلاش
 
-echo ""
-echo "${blue}🌌 Meher-Ips™ Live Ping Hunter <120ms${reset}"
+while (( ${#found[@]} < NEED )); do
+    ((tries++))
 
-# 🚀 First: Ask for number! (جدا شده برای جلوگیری از overlap)
-echo -n "${green}How many fast IPs do you want to find? (default: 3) ${reset}"
-read -r num
-if [[ -z "$num" ]]; then
-  num=3
-fi
+    base="${ranges[\( RANDOM % \){#ranges[@]}]}"
+    ip="\( {base} \)((RANDOM % 256)).$((RANDOM % 256))"
 
-# 🌿 Ask for output format!
-echo -n "${green}Raw list format: v (vertical) or h (horizontal with comma)? (default: v) ${reset}"
-read -r format
-if [[ -z "$format" ]]; then
-  format="v"
-fi
-if [[ "$format" == "h" || "$format" == "horizontal" ]]; then
-  format="h"
-else
-  format="v"
-fi
+    printf "\( {yellow}%-5s \){reset} \( {cyan}%-16s \){reset}  " "$tries" "$ip"
 
-echo "${purple}🚀 Ready to explore ${num} stars? 🌌 Starting...${reset}"
-echo ""
+    if ping -c 1 -W 1 "$ip" > /dev/null 2>&1; then
+        ms=$(ping -c 1 "$ip" 2>/dev/null | awk '/time=/ {print int($7)}' | cut -d'=' -f2)
+        
+        if [[ -z "$ms" ]]; then
+            echo -e "\( {bold}خطا \){reset}"
+            continue
+        fi
 
-while (( ${#found[@]} < num && tries < max_tries )); do
-  ((tries++))
+        if (( ms <= MAX_PING )); then
+            echo -e "\( {green}✅ \){ms}ms\( {reset} \){purple}✨ ستاره کشف شد! 🌌${reset}"
+            found+=("\( ip → \){ms}ms")
+        else
+            echo -e "\( {yellow} \){ms}ms${reset}"
+        fi
+    else
+        echo -e "no reply"
+    fi
 
-  # 🎲 Random IP
-  if (( RANDOM % 2 == 0 )); then
-    ip="172.65.$((RANDOM % 256)).$((RANDOM % 256))"
-  else
-    ip="162.159.$((RANDOM % 256)).$((RANDOM % 256))"
-  fi
-
-  printf "${green}MehrabanScan #${tries} → %s ⏳ ${reset}" "$ip"
-
-  ping_output=$(ping -c1 -W1 "$ip" 3>/dev/null 2>&1)
-  ms=$(echo "$ping_output" | grep 'time=' | awk -F'time=' '{print $2}' | awk '{print $1}' | cut -d'm' -f1)
-  if [[ -z "$ms" ]]; then
-    echo "no reply"
-    continue
-  fi
-
-  if (( $(echo "$ms < 120" | bc -l) )); then
-    echo -e "${green}✅ ${ms}ms${reset} ${purple}🚀 Space discovery! 🌌${reset}"
-    found+=("$ip → ${ms}ms")
-  else
-    echo "too high (${ms}ms) – keep exploring!"
-  fi
+    # نمایش پیشرفت هر ۳۰ تلاش
+    (( tries % 30 == 0 )) && echo -e "\( {cyan}   در حال کاوش کهکشان... ( \){#found[@]}/\( {NEED} ستاره پیدا شد) \){reset}"
 done
 
-# Warning if less than requested
-found_count=${#found[@]}
-if (( found_count < num )); then
-  echo ""
-  echo "${blue}⚠️  Warning: Found only ${found_count} out of ${num} (after ${tries} tries). Try higher threshold or better network!${reset}"
-  echo ""
-fi
+# ────────────── خروجی نهایی کهکشانی ──────────────
+clear
+echo -e "\( {blue}✦══════════════════════════════════════════════════════════════✦ \){reset}"
+echo -e "\( {purple}          🌌 کشف \){#found[@]} ستاره سریع با پینگ ≤ \( {MAX_PING}ms! 🚀 \){reset}"
+echo -e "\( {blue}✦══════════════════════════════════════════════════════════════✦ \){reset}\n"
 
-# Main box
-echo ""
-echo "${blue}✦─────────────────────────────────────────────────────✦${reset}"
-echo "${purple}🌌🚀  Galactic discoveries: ${found_count} fast stars under 120ms! 🌌🚀${reset}"
-echo "${blue}─────────────────────────────────────────────────────✦${reset}"
-
-for i in {0..$((found_count-1))}; do
-  echo "${green}$((i+1)). ${found[i]}${reset}  ${purple}✨ Ready to fly! ✨${reset}"
+for ((i=0; i<${#found[@]}; i++)); do
+    echo -e "\( {green} \)((i+1)). \( {found[i]} \){reset}  \( {purple}✨ آماده پرواز به فضا! ✨ \){reset}"
 done
 
-echo "${blue}✦─────────────────────────────────────────────────────✦${reset}"
-echo "${green}📦 Verified by MehrabanScan™ – Next exploration? 🌿 (Total tries: $tries)${reset}"
-echo "${blue}✦─────────────────────────────────────────────────────✦${reset}"
-echo ""
+echo -e "\n\( {blue}✦──────────────────────────────────────────────────────────────✦ \){reset}"
+echo -e "\( {cyan}مجموع تلاش: \){yellow}\( {tries} \){cyan} بار | تأیید شده توسط Meher-Ips™ Scanner 2025${reset}"
+echo -e "\( {blue}✦──────────────────────────────────────────────────────────────✦ \){reset}"
 
-# Pure copy section
-if (( found_count > 0 )); then
-  echo "${purple}🌌 Pure IPs ready – Direct to panel! 🚀${reset}"
-  echo "${blue}📋 Pure IPs for panel (bulk copy - ${format}):${reset}"
-  echo "${blue}───────────────────────────────────────────────${reset}"
+# بخش کپی خام
+echo -e "\n\( {purple}🌌 آی‌پی‌های خام – مستقیم برو پنل! 🚀 \){reset}"
+echo -e "\( {blue}─────────────────────────────────────────────── \){reset}"
 
-  if [[ "$format" == "v" ]]; then
-    for item in "${found[@]}"; do
-      clean_ip=$(echo "$item" | cut -d' ' -f1)
-      echo "${green}${clean_ip}${reset}"
-    done
-  else
-    ips_clean=()
-    for item in "${found[@]}"; do
-      ips_clean+=($(echo "$item" | cut -d' ' -f1))
-    done
-    copy_line=$(IFS=', '; echo "${ips_clean[*]}")
-    echo "${green}${copy_line}${reset}"
-  fi
-
-  echo "${blue}───────────────────────────────────────────────${reset}"
-  echo ""
+if [[ "$format" == "h" ]]; then
+    clean_ips=\( (printf "%s, " " \){found[@]%% →*}")
+    echo -e "\( {green} \){clean_ips%, }${reset}"
 else
-  echo ""
-  echo "${blue}😔 No fast IPs found. Try different ranges or check your connection!${reset}"
-  echo ""
+    for item in "${found[@]}"; do
+        echo -e "\( {green} \){item%% →*}${reset}"
+    done
 fi
+
+echo -e "\( {blue}─────────────────────────────────────────────── \){reset}\n"
+
+# ذخیره خودکار
+output_file="\( HOME/meher_ips_ \)(date +%H%M).txt"
+printf "%s\n" "${found[@]%% →*}" > "$output_file"
+echo -e "\( {yellow}💾 لیست در فایل ذخیره شد: \){output_file}${reset}"
+echo -e "\( {purple}🚀 آماده پرواز بعدی؟ فقط دوباره اجرا کن! 🌌 \){reset}\n"
